@@ -289,6 +289,23 @@ int main()
     benchmarkMatmul(128, 3);
     benchmarkMatmul(256, 3);
 
+    std::cout << "\n=== Transpose test ===\n";
+
+    Tensor matrix(
+        {1, 2, 3, 4, 5, 6},
+        {2, 3}
+    );
+
+    Tensor transposed = transpose(matrix);
+
+    print_tensor_info(transposed);
+
+    for (float value : transposed.data()) {
+        std::cout << value << " ";
+    }
+    std::cout << "\n";
+
+
     return 0;
 }
 
