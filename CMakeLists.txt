@@ -77,3 +77,12 @@ add_test(
     NAME TensorOperationTests
     COMMAND test_tensor_ops
 )
+
+add_executable(
+    test_linear tests/test_linear.cpp)
+    target_include_directories(test_linear PRIVATE include
+)
+
+add_test(
+    NAME LinearTests COMMAND test_linear
+)
