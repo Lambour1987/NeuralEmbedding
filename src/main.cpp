@@ -282,13 +282,6 @@ int main()
 
     std::cout << "Alle edge-case-tests geslaagd!\n";
 
-    //27-10-2026: voor de benchmark tests
-    std::cout << "\n=== Matmul Benchmark ===\n";
-
-    benchmarkMatmul(64, 3);
-    benchmarkMatmul(128, 3);
-    benchmarkMatmul(256, 3);
-
     std::cout << "\n=== Transpose test ===\n";
 
     Tensor matrix(

@@ -12,6 +12,15 @@ add_executable(NeuralEmbedding
     src/main.cpp
 )
 
+# Matrix multiplication benchmark
+add_executable(benchmark_matmul
+    benchmarks/benchmark_matmul.cpp
+)
+
+target_include_directories(benchmark_matmul PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
 # Tensor unit tests
 add_executable(test_tensor
     tests/test_tensor.cpp
@@ -40,6 +49,7 @@ if(MSVC)
     target_compile_options(NeuralEmbedding PRIVATE /W4)
     target_compile_options(test_tensor PRIVATE /W4)
     target_compile_options(test_tensor_ops PRIVATE /W4)
+    target_compile_options(benchmark_matmul PRIVATE /W4)
 else()
     target_compile_options(NeuralEmbedding PRIVATE
         -Wall -Wextra -Wpedantic
@@ -50,6 +60,9 @@ else()
     target_compile_options(test_tensor_ops PRIVATE
         -Wall -Wextra -Wpedantic
     )
+    target_compile_options(benchmark_matmul PRIVATE
+    -Wall -Wextra -Wpedantic
+)
 endif()
 
 # Automated testing with CTest

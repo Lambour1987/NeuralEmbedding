@@ -59,6 +59,48 @@ namespace
 
         check(caught, "Out-of-range index rejected");
     }
+        
+    void testInvalidTensorConstruction()
+    {
+        bool caught = false;
+
+        try {
+            Tensor invalid({1, 2, 3}, {2, 2});
+        }
+        catch (const std::invalid_argument&) {
+            caught = true;
+        }
+
+        check(caught, "Mismatched data and shape are rejected");
+    }
+
+    void testInvalidIndexCount()
+    {
+        Tensor tensor({1, 2, 3, 4}, {2, 2});
+
+        bool caught = false;
+
+        try {
+            (void)tensor.at({0});
+        }
+        catch (const std::invalid_argument&) {
+            caught = true;
+        }
+
+        check(caught, "Incorrect number of indices is rejected");
+    }
+
+    void testZeroSizedTensor()
+    {
+        Tensor tensor({}, {2, 0, 3});
+
+        check(tensor.size() == 0, "Zero-sized tensor has no elements");
+
+        check(
+            tensor.shape() == std::vector<std::size_t>{2, 0, 3},
+            "Zero-sized tensor preserves its shape"
+        );
+    }
 }
 
 int main()
@@ -70,6 +112,10 @@ int main()
 
     std::cout << "\nPassed: " << testsPassed
               << " | Failed: " << testsFailed << '\n';
+
+    testInvalidTensorConstruction();
+    testInvalidIndexCount();
+    testZeroSizedTensor();
 
     return testsFailed == 0 ? 0 : 1;
 }
