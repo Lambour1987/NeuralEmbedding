@@ -1,0 +1,4 @@
+20-10-2026
+
+Recursie van multiplication matrices kost N! dat is O(N^n) dus daarom doen we
+Tabulation method (iteratief)
