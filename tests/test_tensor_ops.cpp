@@ -135,6 +135,35 @@ namespace
 
         check(caught, "transpose rejects non-2D tensors");
     }
+    
+    
+    void testMatmulKnownValues()
+    {
+        Tensor a({1.0f, 2.0f,
+                  3.0f, 4.0f}, {2, 2});
+
+        Tensor b({5.0f, 6.0f,
+                  7.0f, 8.0f}, {2, 2});
+
+        Tensor result = matmul(a, b);
+
+        check(result.shape() == std::vector<std::size_t>{2, 2},
+              "matmul result has correct shape");
+
+        check(result.at({0, 0}) == 19.0f,
+              "matmul calculates top-left value");
+
+        check(result.at({0, 1}) == 22.0f,
+              "matmul calculates top-right value");
+
+        check(result.at({1, 0}) == 43.0f,
+              "matmul calculates bottom-left value");
+
+        check(result.at({1, 1}) == 50.0f,
+              "matmul calculates bottom-right value");
+    }
+
+
 }
 
 int main()
@@ -146,6 +175,7 @@ int main()
     testMultiply();
     testMatmul();
     testTranspose();
+    testMatmulKnownValues();
 
     std::cout << "\nPassed: " << testsPassed
               << " | Failed: " << testsFailed << '\n';
