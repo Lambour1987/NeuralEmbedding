@@ -103,3 +103,7 @@ add_test(NAME MultiLayerTests COMMAND test_multi_layer)
 add_executable(test_sequential tests/test_sequential.cpp)
 target_include_directories(test_sequential PRIVATE include)
 add_test(NAME SequentialTests COMMAND test_sequential)
+
+add_executable(test_loss tests/test_loss.cpp)
+target_include_directories(test_loss PRIVATE include)
+add_test(NAME LossTests COMMAND test_loss)
