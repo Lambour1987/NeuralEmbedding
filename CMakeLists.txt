@@ -86,3 +86,20 @@ add_executable(
 add_test(
     NAME LinearTests COMMAND test_linear
 )
+
+
+add_executable(test_activations tests/test_activations.cpp)
+target_include_directories(test_activations PRIVATE include)
+add_test(NAME ActivationTests COMMAND test_activations)
+
+add_executable(test_linear_relu tests/test_linear_relu.cpp)
+target_include_directories(test_linear_relu PRIVATE include)
+add_test(NAME LinearReluTests COMMAND test_linear_relu)
+
+add_executable(test_multi_layer tests/test_multi_layer.cpp)
+target_include_directories(test_multi_layer PRIVATE include)
+add_test(NAME MultiLayerTests COMMAND test_multi_layer)
+
+add_executable(test_sequential tests/test_sequential.cpp)
+target_include_directories(test_sequential PRIVATE include)
+add_test(NAME SequentialTests COMMAND test_sequential)
