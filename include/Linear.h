@@ -12,6 +12,7 @@
 //24-11-26
 #include <optional>
 #include <utility>
+#include <cmath>
 
 class Linear {
 public:
@@ -92,6 +93,8 @@ public:
     const Tensor& weight_gradients() const;
 
     const Tensor& bias_gradients() const;
+
+    void update_parameters(float learning_rate);
 
 private:
     Tensor weights_;
@@ -182,5 +185,58 @@ inline const Tensor& Linear::bias_gradients() const
     }
 
     return bias_gradients_.value();
+}
+
+inline void Linear::update_parameters(float learning_rate)
+{
+    // Controleer de learning rate
+    if (!std::isfinite(learning_rate) || learning_rate <= 0.0f) {
+        throw std::invalid_argument(
+            "Learning rate must be a positive finite number"
+        );
+    }
+
+    // Haal de berekende gradients op
+    const Tensor& weight_gradient = weight_gradients();
+    const Tensor& bias_gradient = bias_gradients();
+
+    // Controleer of de gradientvormen overeenkomen
+    if (weight_gradient.shape() != weights_.shape() ||
+        bias_gradient.shape() != bias_.shape()) {
+        throw std::logic_error(
+            "Gradient shapes do not match parameter shapes"
+        );
+    }
+
+    // Bereken de nieuwe weights
+    std::vector<float> updated_weights = weights_.data();
+
+    for (std::size_t i = 0; i < updated_weights.size(); ++i) {
+        updated_weights[i] -=
+            learning_rate * weight_gradient.data()[i];
+    }
+
+    // Bereken de nieuwe biases
+    std::vector<float> updated_bias = bias_.data();
+
+    for (std::size_t i = 0; i < updated_bias.size(); ++i) {
+        updated_bias[i] -=
+            learning_rate * bias_gradient.data()[i];
+    }
+
+    // Bouw nieuwe Tensor-objecten
+    Tensor new_weights(
+        std::move(updated_weights),
+        weights_.shape()
+    );
+
+    Tensor new_bias(
+        std::move(updated_bias),
+        bias_.shape()
+    );
+
+    // Vervang de oude parameters
+    weights_ = std::move(new_weights);
+    bias_ = std::move(new_bias);
 }
 

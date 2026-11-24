@@ -10,6 +10,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <cmath>
 
 class Sequential {
 public:
@@ -73,7 +74,35 @@ public:
 
         return gradients;
     }
+    void update_parameters(float learning_rate) {
+    // Controleer de learning rate
+    if (!std::isfinite(learning_rate) || learning_rate <= 0.0f) {
+        throw std::invalid_argument(
+            "Learning rate must be a positive finite number"
+        );
+    }
 
+    // Controleer eerst of alle lagen gradients hebben.
+    for (const auto& layer : layers_) {
+        std::visit(
+            [](const auto& current_layer) {
+                current_layer.weight_gradients();
+                current_layer.bias_gradients();
+            },
+            layer
+        );
+    }
+
+    // Werk daarna alle lagen bij.
+    for (auto& layer : layers_) {
+        std::visit(
+            [learning_rate](auto& current_layer) {
+                current_layer.update_parameters(learning_rate);
+            },
+            layer
+        );
+    }
+}
 
     const Tensor& weight_gradients(std::size_t layer_index) const {
         if (layer_index >= layers_.size()) {

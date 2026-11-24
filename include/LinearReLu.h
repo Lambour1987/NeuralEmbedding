@@ -69,6 +69,10 @@ public:
         return linear_.bias_gradients();
     }
 
+    void update_parameters(float learning_rate) {
+    linear_.update_parameters(learning_rate);
+}
+
 private:
     Linear linear_;
 

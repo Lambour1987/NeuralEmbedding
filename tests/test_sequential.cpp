@@ -269,6 +269,23 @@ int main() {
         "Output bias gradient is incorrect"
     );
 
+    // ==========================================
+    // Test 4: Sequential Gradient Descent update
+    // ==========================================
+
+    integration_network.update_parameters(0.1f);
+
+    // Forward pass na de parameterupdate
+    Tensor updated_predictions =
+        integration_network.forward(integration_input);
+
+    check(
+        std::fabs(updated_predictions.data()[0] - (-0.4f)) < 1e-5f,
+        "Sequential Gradient Descent update produced an incorrect prediction"
+    );
+
+    std::cout << "Sequential Gradient Descent update test passed!\n";
+
     std::cout << "Sequential forward test passed!\n";
     std::cout << "Sequential backward test passed!\n";
     std::cout << "MSE and Sequential integration test passed!\n";
