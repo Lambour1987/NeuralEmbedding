@@ -107,3 +107,24 @@ add_test(NAME SequentialTests COMMAND test_sequential)
 add_executable(test_loss tests/test_loss.cpp)
 target_include_directories(test_loss PRIVATE include)
 add_test(NAME LossTests COMMAND test_loss)
+
+add_executable(
+    test_trainable_neuron
+    tests/test_trainable_neuron.cpp
+)
+
+target_include_directories(test_trainable_neuron PRIVATE include)
+add_test(NAME TrainableNeuronTests COMMAND test_trainable_neuron)
+target_include_directories(
+    test_trainable_neuron PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+if(MSVC)
+    target_compile_options(test_trainable_neuron PRIVATE /W4)
+else()
+    target_compile_options(
+        test_trainable_neuron PRIVATE
+        -Wall -Wextra -Wpedantic
+    )
+endif()
