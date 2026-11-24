@@ -3,3 +3,12 @@ build/
 out/
 *.user
 *.suo
+
+# Persoonlijke neuronvoorbeelden
+NeuronVoorbeeld*.xlsx
+VoorbeeldNetwerk.drawio
+VoorbeeldNetwerk.drawio.bkp
+
+# Tijdelijke Excel-bestanden
+~$*.xlsx
+.$*.drawio.bkp
