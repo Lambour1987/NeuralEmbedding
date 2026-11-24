@@ -74,6 +74,37 @@ public:
         return gradients;
     }
 
+
+    const Tensor& weight_gradients(std::size_t layer_index) const {
+        if (layer_index >= layers_.size()) {
+            throw std::out_of_range(
+                "Layer index is out of range"
+            );
+        }
+
+        return std::visit(
+            [](const auto& current_layer) -> const Tensor& {
+                return current_layer.weight_gradients();
+            },
+            layers_[layer_index]
+        );
+    }
+
+    const Tensor& bias_gradients(std::size_t layer_index) const {
+        if (layer_index >= layers_.size()) {
+            throw std::out_of_range(
+                "Layer index is out of range"
+            );
+        }
+
+        return std::visit(
+            [](const auto& current_layer) -> const Tensor& {
+                return current_layer.bias_gradients();
+            },
+            layers_[layer_index]
+        );
+    }
+
     std::size_t size() const {
         return layers_.size();
     }
