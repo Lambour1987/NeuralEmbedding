@@ -9,6 +9,10 @@
 #include <stdexcept>
 #include <vector>
 
+//24-11-26
+#include <optional>
+#include <utility>
+
 class Linear {
 public:
     Linear(Tensor weights, Tensor bias)
@@ -79,7 +83,104 @@ public:
         return bias_;
     }
 
+    //24-11-2026: Uitbreiding Backward
+    Tensor backward(
+    const Tensor& input,
+    const Tensor& output_gradients
+    );
+
+    const Tensor& weight_gradients() const;
+
+    const Tensor& bias_gradients() const;
+
 private:
     Tensor weights_;
     Tensor bias_;
+
+    //24-11-2026: Nieuw
+    std::optional<Tensor> weight_gradients_;
+    std::optional<Tensor> bias_gradients_;
 };
+
+//24-11-26: onderstaande hier toevoegen? buiten de class
+
+inline Tensor Linear::backward(
+    const Tensor& input,
+    const Tensor& output_gradients
+)
+{
+    // Controleer de input
+    if (input.shape().size() != 2 ||
+        input.shape()[1] != weights_.shape()[0]) {
+        throw std::invalid_argument(
+            "Backward input shape does not match weights"
+        );
+    }
+
+    // Controleer de output gradients
+    if (output_gradients.shape().size() != 2 ||
+        output_gradients.shape()[0] != input.shape()[0] ||
+        output_gradients.shape()[1] != weights_.shape()[1]) {
+        throw std::invalid_argument(
+            "Output gradients have incorrect shape"
+        );
+    }
+    if (input.shape()[0] == 0) {
+    throw std::invalid_argument(
+        "Backward requires a non-empty batch"
+    );
+}
+
+    // dW = transpose(input) * output_gradients
+    weight_gradients_ = matmul(
+        transpose(input),
+        output_gradients
+    );
+
+    // db = som van output_gradients over de batch
+    const std::size_t batch_size = input.shape()[0];
+    const std::size_t output_features = weights_.shape()[1];
+
+    std::vector<float> bias_gradient(output_features, 0.0f);
+
+    for (std::size_t row = 0; row < batch_size; ++row) {
+        for (std::size_t col = 0; col < output_features; ++col) {
+            bias_gradient[col] +=
+                output_gradients.data()[row * output_features + col];
+        }
+    }
+
+    bias_gradients_ = Tensor(
+        std::move(bias_gradient),
+        {output_features}
+    );
+
+    // dX = output_gradients * transpose(weights)
+    return matmul(
+        output_gradients,
+        transpose(weights_)
+    );
+}
+
+inline const Tensor& Linear::weight_gradients() const
+{
+    if (!weight_gradients_.has_value()) {
+        throw std::logic_error(
+            "Weight gradients have not been calculated"
+        );
+    }
+
+    return weight_gradients_.value();
+}
+
+inline const Tensor& Linear::bias_gradients() const
+{
+    if (!bias_gradients_.has_value()) {
+        throw std::logic_error(
+            "Bias gradients have not been calculated"
+        );
+    }
+
+    return bias_gradients_.value();
+}
+

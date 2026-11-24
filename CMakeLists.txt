@@ -128,3 +128,52 @@ else()
         -Wall -Wextra -Wpedantic
     )
 endif()
+
+#24-11-26: toegevoegd
+add_executable(
+    test_linear_backward
+    tests/test_linear_backward.cpp
+)
+
+target_include_directories(
+    test_linear_backward PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+add_test(
+    NAME LinearBackwardTests
+    COMMAND test_linear_backward
+)
+
+if(MSVC)
+    target_compile_options(test_linear_backward PRIVATE /W4)
+else()
+    target_compile_options(
+        test_linear_backward PRIVATE
+        -Wall -Wextra -Wpedantic
+    )
+endif()
+
+add_executable(
+    test_linear_relu_backward
+    tests/test_linear_relu_backward.cpp
+)
+
+target_include_directories(
+    test_linear_relu_backward PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+add_test(
+    NAME LinearReLUBackwardTests
+    COMMAND test_linear_relu_backward
+)
+
+if(MSVC)
+    target_compile_options(test_linear_relu_backward PRIVATE /W4)
+else()
+    target_compile_options(
+        test_linear_relu_backward PRIVATE
+        -Wall -Wextra -Wpedantic
+    )
+endif()
