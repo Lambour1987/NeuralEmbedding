@@ -23,8 +23,8 @@ Sequential create_network() {
     network.add(
         LinearReLU(
             Tensor(
-                {0.5f, 0.0f,
-                 0.0f, 0.5f},
+                {1.0f, 0.5f,
+                 1.0f, -0.5f},
                 {2, 2}
             ),
             Tensor({0.0f, 0.0f}, {2})
@@ -40,7 +40,6 @@ Sequential create_network() {
 
     return network;
 }
-
 
 Sequential create_leaky_network() {
     Sequential network;
