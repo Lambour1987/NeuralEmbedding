@@ -203,3 +203,29 @@ else()
         -Wall -Wextra -Wpedantic
     )
 endif()
+
+
+# Trainer tests
+add_executable(
+    test_trainer
+    tests/test_trainer.cpp
+)
+
+target_include_directories(
+    test_trainer PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+add_test(
+    NAME TrainerTests
+    COMMAND test_trainer
+)
+
+if(MSVC)
+    target_compile_options(test_trainer PRIVATE /W4)
+else()
+    target_compile_options(
+        test_trainer PRIVATE
+        -Wall -Wextra -Wpedantic
+    )
+endif()
