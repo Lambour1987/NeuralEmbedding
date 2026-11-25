@@ -149,6 +149,43 @@ int main()
 
         std::cout << "Gradient Descent update test passed!\n";
 
+
+        // ==========================================
+        // TEST 4: Gradient accumulation
+        // ==========================================
+
+        Linear accumulation_layer(weights, bias);
+
+        accumulation_layer.zero_grad();
+
+        accumulation_layer.backward(
+            update_input,
+            output_gradients,
+            true
+        );
+
+        accumulation_layer.backward(
+            update_input,
+            output_gradients,
+            true
+        );
+
+        const auto& accumulated_weights =
+            accumulation_layer.weight_gradients().data();
+
+        check(
+            std::fabs(accumulated_weights[0] - 1.0f) < 1e-5f,
+            "Weight gradient accumulation failed"
+        );
+
+        check(
+            std::fabs(accumulated_weights[1] - 2.0f) < 1e-5f,
+            "Weight gradient accumulation failed"
+        );
+
+        std::cout << "Gradient accumulation test passed!\n";
+
+
         std::cout << "\nAll Linear tests passed!\n";
 
         return 0;

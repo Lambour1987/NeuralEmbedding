@@ -85,9 +85,11 @@ public:
     }
 
     //24-11-2026: Uitbreiding Backward
+    //25-11-2026: Weer uitbreiding
     Tensor backward(
     const Tensor& input,
-    const Tensor& output_gradients
+    const Tensor& output_gradients,
+    bool accumulate = false
     );
 
     const Tensor& weight_gradients() const;
@@ -95,6 +97,10 @@ public:
     const Tensor& bias_gradients() const;
 
     void update_parameters(float learning_rate);
+
+    void zero_grad();
+
+    void scale_gradients(float factor);
 
 private:
     Tensor weights_;
@@ -107,12 +113,13 @@ private:
 
 //24-11-26: onderstaande hier toevoegen? buiten de class
 
+
 inline Tensor Linear::backward(
     const Tensor& input,
-    const Tensor& output_gradients
+    const Tensor& output_gradients,
+    bool accumulate
 )
 {
-    // Controleer de input
     if (input.shape().size() != 2 ||
         input.shape()[1] != weights_.shape()[0]) {
         throw std::invalid_argument(
@@ -120,7 +127,6 @@ inline Tensor Linear::backward(
         );
     }
 
-    // Controleer de output gradients
     if (output_gradients.shape().size() != 2 ||
         output_gradients.shape()[0] != input.shape()[0] ||
         output_gradients.shape()[1] != weights_.shape()[1]) {
@@ -128,19 +134,18 @@ inline Tensor Linear::backward(
             "Output gradients have incorrect shape"
         );
     }
-    if (input.shape()[0] == 0) {
-    throw std::invalid_argument(
-        "Backward requires a non-empty batch"
-    );
-}
 
-    // dW = transpose(input) * output_gradients
-    weight_gradients_ = matmul(
+    if (input.shape()[0] == 0) {
+        throw std::invalid_argument(
+            "Backward requires a non-empty batch"
+        );
+    }
+
+    Tensor new_weight_gradients = matmul(
         transpose(input),
         output_gradients
     );
 
-    // db = som van output_gradients over de batch
     const std::size_t batch_size = input.shape()[0];
     const std::size_t output_features = weights_.shape()[1];
 
@@ -153,17 +158,99 @@ inline Tensor Linear::backward(
         }
     }
 
-    bias_gradients_ = Tensor(
+    Tensor new_bias_gradients(
         std::move(bias_gradient),
         {output_features}
     );
 
-    // dX = output_gradients * transpose(weights)
+    if (accumulate &&
+        weight_gradients_.has_value() &&
+        bias_gradients_.has_value()) {
+
+        std::vector<float> accumulated_weights =
+            weight_gradients_->data();
+
+        std::vector<float> accumulated_bias =
+            bias_gradients_->data();
+
+        for (std::size_t i = 0; i < accumulated_weights.size(); ++i) {
+            accumulated_weights[i] +=
+                new_weight_gradients.data()[i];
+        }
+
+        for (std::size_t i = 0; i < accumulated_bias.size(); ++i) {
+            accumulated_bias[i] +=
+                new_bias_gradients.data()[i];
+        }
+
+        weight_gradients_ = Tensor(
+            std::move(accumulated_weights),
+            weights_.shape()
+        );
+
+        bias_gradients_ = Tensor(
+            std::move(accumulated_bias),
+            bias_.shape()
+        );
+    }
+    else {
+        weight_gradients_ = std::move(new_weight_gradients);
+        bias_gradients_ = std::move(new_bias_gradients);
+    }
+
     return matmul(
         output_gradients,
         transpose(weights_)
     );
 }
+
+
+inline void Linear::zero_grad()
+{
+    weight_gradients_ = Tensor(
+        std::vector<float>(weights_.size(), 0.0f),
+        weights_.shape()
+    );
+
+    bias_gradients_ = Tensor(
+        std::vector<float>(bias_.size(), 0.0f),
+        bias_.shape()
+    );
+}
+
+inline void Linear::scale_gradients(float factor)
+{
+    if (!std::isfinite(factor) || factor < 0.0f) {
+        throw std::invalid_argument(
+            "Gradient scale must be a non-negative finite number"
+        );
+    }
+
+    const Tensor& weight_gradient = weight_gradients();
+    const Tensor& bias_gradient = bias_gradients();
+
+    std::vector<float> scaled_weights = weight_gradient.data();
+    std::vector<float> scaled_bias = bias_gradient.data();
+
+    for (float& value : scaled_weights) {
+        value *= factor;
+    }
+
+    for (float& value : scaled_bias) {
+        value *= factor;
+    }
+
+    weight_gradients_ = Tensor(
+        std::move(scaled_weights),
+        weights_.shape()
+    );
+
+    bias_gradients_ = Tensor(
+        std::move(scaled_bias),
+        bias_.shape()
+    );
+}
+
 
 inline const Tensor& Linear::weight_gradients() const
 {

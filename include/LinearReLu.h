@@ -1,5 +1,7 @@
 //28-10-2026
 //24-11-2026 Inhoudt volledig aangepast
+//25-11-2026 weer aangepast
+
 
 #pragma once
 
@@ -25,8 +27,29 @@ public:
 
         return relu(linear_output);
     }
+    const Tensor& linear_output() const {
+    if (!linear_output_cache_.has_value()) {
+        throw std::logic_error(
+            "Forward must be called before accessing linear output"
+        );
+    }
 
-    Tensor backward(const Tensor& output_gradients) {
+    return linear_output_cache_.value();
+    }
+    Tensor activation_output() const {
+    if (!linear_output_cache_.has_value()) {
+        throw std::logic_error(
+            "Forward must be called before accessing activation output"
+        );
+    }
+
+    return relu(linear_output_cache_.value());
+    }
+
+    Tensor backward(
+        const Tensor& output_gradients,
+        bool accumulate = false
+    ) {
         if (!input_cache_.has_value() ||
             !linear_output_cache_.has_value()) {
             throw std::logic_error(
@@ -58,20 +81,37 @@ public:
 
         return linear_.backward(
             input_cache_.value(),
-            linear_gradients
+            linear_gradients,
+            accumulate
         );
     }
-        const Tensor& weight_gradients() const {
+
+    const Tensor& weight_gradients() const {
         return linear_.weight_gradients();
     }
 
     const Tensor& bias_gradients() const {
         return linear_.bias_gradients();
     }
+    const Tensor& weights() const {
+    return linear_.weights();
+    }
+
+    const Tensor& bias() const {
+        return linear_.bias();
+    }
+
+    void zero_grad() {
+        linear_.zero_grad();
+    }
+
+    void scale_gradients(float factor) {
+        linear_.scale_gradients(factor);
+    }
 
     void update_parameters(float learning_rate) {
-    linear_.update_parameters(learning_rate);
-}
+        linear_.update_parameters(learning_rate);
+    }
 
 private:
     Linear linear_;

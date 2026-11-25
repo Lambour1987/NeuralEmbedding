@@ -284,6 +284,94 @@ int main() {
         "Sequential Gradient Descent update produced an incorrect prediction"
     );
 
+
+    // ==========================================
+    // Test 5: Sequential met LinearLeakyReLU
+    // ==========================================
+
+    Tensor leaky_input(
+        {1.0f, 2.0f},
+        {1, 2}
+    );
+
+    Sequential leaky_network;
+
+    leaky_network.add(
+        LinearLeakyReLU(
+            Tensor(
+                {1.0f, 0.0f,
+                 0.0f, 1.0f},
+                {2, 2}
+            ),
+            Tensor({0.0f, -3.0f}, {2})
+        )
+    );
+
+    leaky_network.add(
+        Linear(
+            Tensor({2.0f, 3.0f}, {2, 1}),
+            Tensor({0.0f}, {1})
+        )
+    );
+
+    // Forward: hidden output wordt [1.0, -0.01].
+    Tensor leaky_predictions =
+        leaky_network.forward(leaky_input);
+
+    check(
+        leaky_network.size() == 2,
+        "Leaky network should contain two layers"
+    );
+
+    check(
+        std::fabs(leaky_predictions.data()[0] - 1.97f) < 1e-6f,
+        "Leaky network forward output is incorrect"
+    );
+
+    // Backpropagation
+    Tensor leaky_output_gradients(
+        {1.0f},
+        {1, 1}
+    );
+
+    Tensor leaky_input_gradients =
+        leaky_network.backward(leaky_output_gradients);
+
+    check(
+        std::fabs(leaky_input_gradients.data()[0] - 2.0f) < 1e-6f,
+        "Leaky input gradient 0 is incorrect"
+    );
+
+    check(
+        std::fabs(leaky_input_gradients.data()[1] - 0.03f) < 1e-6f,
+        "Leaky input gradient 1 is incorrect"
+    );
+
+    // Hidden layer gradients controleren.
+    const Tensor& leaky_weight_gradients =
+        leaky_network.weight_gradients(0);
+
+    const Tensor& leaky_bias_gradients =
+        leaky_network.bias_gradients(0);
+
+    check(
+        std::fabs(leaky_weight_gradients.data()[0] - 2.0f) < 1e-6f &&
+        std::fabs(leaky_weight_gradients.data()[1] - 0.03f) < 1e-6f &&
+        std::fabs(leaky_weight_gradients.data()[2] - 4.0f) < 1e-6f &&
+        std::fabs(leaky_weight_gradients.data()[3] - 0.06f) < 1e-6f,
+        "Leaky hidden weight gradients are incorrect"
+    );
+
+    check(
+        std::fabs(leaky_bias_gradients.data()[0] - 2.0f) < 1e-6f &&
+        std::fabs(leaky_bias_gradients.data()[1] - 0.03f) < 1e-6f,
+        "Leaky hidden bias gradients are incorrect"
+    );
+
+    std::cout << "Sequential LinearLeakyReLU test passed!\n";
+
+
+
     std::cout << "Sequential Gradient Descent update test passed!\n";
 
     std::cout << "Sequential forward test passed!\n";

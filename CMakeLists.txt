@@ -229,3 +229,50 @@ else()
         -Wall -Wextra -Wpedantic
     )
 endif()
+
+
+# Neural network training demo
+add_executable(
+    training_demo
+    src/training_demo.cpp
+)
+
+target_include_directories(
+    training_demo PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+if(MSVC)
+    target_compile_options(training_demo PRIVATE /W4)
+else()
+    target_compile_options(
+        training_demo PRIVATE
+        -Wall -Wextra -Wpedantic
+    )
+endif()
+
+
+# Linear Leaky ReLU backward tests
+add_executable(
+    test_linear_leaky_relu
+    tests/test_linear_leaky_relu.cpp
+)
+
+target_include_directories(
+    test_linear_leaky_relu PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+add_test(
+    NAME LinearLeakyReLUBackwardTests
+    COMMAND test_linear_leaky_relu
+)
+
+if(MSVC)
+    target_compile_options(test_linear_leaky_relu PRIVATE /W4)
+else()
+    target_compile_options(
+        test_linear_leaky_relu PRIVATE
+        -Wall -Wextra -Wpedantic
+    )
+endif()
