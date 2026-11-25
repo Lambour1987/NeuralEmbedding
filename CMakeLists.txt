@@ -177,3 +177,29 @@ else()
         -Wall -Wextra -Wpedantic
     )
 endif()
+
+
+# Gradient Descent optimizer tests
+add_executable(
+    test_gradient_descent
+    tests/test_gradient_descent.cpp
+)
+
+target_include_directories(
+    test_gradient_descent PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+add_test(
+    NAME GradientDescentTests
+    COMMAND test_gradient_descent
+)
+
+if(MSVC)
+    target_compile_options(test_gradient_descent PRIVATE /W4)
+else()
+    target_compile_options(
+        test_gradient_descent PRIVATE
+        -Wall -Wextra -Wpedantic
+    )
+endif()
