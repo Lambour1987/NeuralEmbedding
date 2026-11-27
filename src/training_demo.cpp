@@ -4,11 +4,13 @@
 
 #include "Trainer.h"
 #include "Initializers.h"
+#include "Evaluator.h"
 
 #include <iomanip>
 #include <iostream>
 #include <vector>
 #include <iomanip>
+
 
 
 Sequential create_network(unsigned int seed = 2026u) {
@@ -102,6 +104,31 @@ void print_predictions(
                   << '\n';
     }
 }
+
+
+void print_final_mse(
+    Sequential& network,
+    const std::vector<Tensor>& inputs,
+    const std::vector<Tensor>& targets
+) {
+    float total_loss = 0.0f;
+
+    for (std::size_t i = 0; i < inputs.size(); ++i) {
+        Tensor prediction = network.forward(inputs[i]);
+
+        total_loss += mean_squared_error(
+            prediction,
+            targets[i]
+        );
+    }
+
+    const float final_mse =
+        total_loss / static_cast<float>(inputs.size());
+
+    std::cout << "Final MSE: "
+              << final_mse << '\n';
+}
+
 
 void inspect_activations(
     Sequential& network,
@@ -329,6 +356,8 @@ int main() {
     Sequential leaky_network = create_leaky_network();
     Sequential diagnostic_network = create_network();
 
+    Evaluator evaluator;
+
     std::cout << "\n=== Initial ReLU neuron activity ===\n";
     inspect_neuron_activity(mini_batch_network, inputs);
 
@@ -358,11 +387,11 @@ int main() {
     std::cout << std::fixed << std::setprecision(4);
 
     // Loss histories verzamelen over alle trainingsblokken.
-std::vector<float> online_losses;
-std::vector<float> mini_batch_losses;
-std::vector<float> leaky_losses;
+    std::vector<float> online_losses;
+    std::vector<float> mini_batch_losses;
+    std::vector<float> leaky_losses;
 
-constexpr std::size_t checkpoint_interval = 1;
+    constexpr std::size_t checkpoint_interval = 1;
 
 // Training opdelen in blokken van 1 epochs.
 for (std::size_t checkpoint = 0;
@@ -480,7 +509,7 @@ for (std::size_t checkpoint = 0;
     std::cout << "Loss before last epoch update: "
               << online_losses.back() << '\n';
 
-    std::cout << "\nMini-batch Leaky ReLU:\n";
+    std::cout << "\nMini-batch ReLU:\n";
     std::cout << "Loss before epoch 1 update: "
           << mini_batch_losses.front() << '\n';
     std::cout << "Loss before last epoch update: "
@@ -494,6 +523,7 @@ for (std::size_t checkpoint = 0;
 
     std::cout << "\n=== Online predictions ===\n";
     print_predictions(online_network, inputs, targets);
+
 
     std::cout << "\n=== Mini-batch predictions ===\n";
     print_predictions(mini_batch_network, inputs, targets);
@@ -515,6 +545,24 @@ for (std::size_t checkpoint = 0;
 
     std::cout << "\n=== Final Leaky ReLU neuron activity ===\n";
     inspect_neuron_activity(leaky_network, inputs);
+
+    std::cout << "\n=== Final evaluation ===\n";
+
+    std::cout << "Online MSE: "
+            << evaluator.evaluate_mse(
+                online_network, inputs, targets
+            ) << '\n';
+
+    std::cout << "Mini-batch ReLU MSE: "
+            << evaluator.evaluate_mse(
+                mini_batch_network, inputs, targets
+            ) << '\n';
+
+    std::cout << "Mini-batch Leaky ReLU MSE: "
+            << evaluator.evaluate_mse(
+                leaky_network, inputs, targets
+            ) << '\n';
+
 
     return 0;
 }

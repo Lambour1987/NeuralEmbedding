@@ -231,6 +231,32 @@ else()
 endif()
 
 
+# Evaluator tests
+add_executable(
+    test_evaluator
+    tests/test_evaluator.cpp
+)
+
+target_include_directories(
+    test_evaluator PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+add_test(
+    NAME EvaluatorTests
+    COMMAND test_evaluator
+)
+
+if(MSVC)
+    target_compile_options(test_evaluator PRIVATE /W4)
+else()
+    target_compile_options(
+        test_evaluator PRIVATE
+        -Wall -Wextra -Wpedantic
+    )
+endif()
+
+
 # Neural network training demo
 add_executable(
     training_demo
