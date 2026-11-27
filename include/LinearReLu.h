@@ -101,6 +101,11 @@ public:
         return linear_.bias();
     }
 
+    void set_parameters(const Tensor& new_weights,const Tensor& new_bias) 
+    {
+    linear_.set_parameters(new_weights, new_bias);
+    }
+
     void zero_grad() {
         linear_.zero_grad();
     }

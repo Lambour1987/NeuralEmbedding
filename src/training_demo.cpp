@@ -5,11 +5,14 @@
 #include "Trainer.h"
 #include "Initializers.h"
 #include "Evaluator.h"
+#include "ModelSerializer.h"
 
 #include <iomanip>
 #include <iostream>
 #include <vector>
 #include <iomanip>
+#include <cmath>
+#include <stdexcept>
 
 
 
@@ -562,6 +565,99 @@ for (std::size_t checkpoint = 0;
             << evaluator.evaluate_mse(
                 leaky_network, inputs, targets
             ) << '\n';
+
+        // ==========================================
+    // MODEL CHECKPOINT: SAVE AND RESTORE
+    // ==========================================
+
+    std::cout << "\n=== Model checkpoint test ===\n";
+
+    ModelSerializer serializer;
+
+    const std::string checkpoint_file =
+        "mini_batch_relu.nnckpt";
+
+    // 1. Voorspellingen van het oorspronkelijke netwerk bewaren.
+    std::vector<Tensor> original_predictions;
+
+    for (const Tensor& input : inputs) {
+        original_predictions.push_back(
+            mini_batch_network.forward(input)
+        );
+    }
+
+    // 2. Het getrainde netwerk opslaan.
+    serializer.save(
+        mini_batch_network,
+        checkpoint_file
+    );
+
+    std::cout << "Model saved: "
+              << checkpoint_file << '\n';
+
+    // 3. Een nieuw netwerk met dezelfde architectuur maken.
+    Sequential restored_network = create_network();
+
+    // 4. De opgeslagen parameters terugladen.
+    serializer.load(
+        restored_network,
+        checkpoint_file
+    );
+
+    std::cout << "Model restored successfully.\n";
+
+    // 5. Voorspellingen vergelijken.
+    bool predictions_match = true;
+
+    for (std::size_t i = 0; i < inputs.size(); ++i) {
+        Tensor restored_prediction =
+            restored_network.forward(inputs[i]);
+
+        const float original_value =
+            original_predictions[i].data()[0];
+
+        const float restored_value =
+            restored_prediction.data()[0];
+
+        if (std::fabs(original_value - restored_value) > 1e-6f) {
+            predictions_match = false;
+        }
+    }
+
+    std::cout << "Predictions identical: "
+              << (predictions_match ? "YES" : "NO")
+              << '\n';
+
+    if (!predictions_match) {
+        throw std::runtime_error(
+            "Checkpoint restoration changed predictions."
+        );
+    }
+
+    // 6. Ook de evaluatiescores vergelijken.
+    const float original_mse =
+        evaluator.evaluate_mse(
+            mini_batch_network, inputs, targets
+        );
+
+    const float restored_mse =
+        evaluator.evaluate_mse(
+            restored_network, inputs, targets
+        );
+
+    std::cout << "Original MSE:  "
+              << original_mse << '\n';
+
+    std::cout << "Restored MSE:  "
+              << restored_mse << '\n';
+
+    if (std::fabs(original_mse - restored_mse) > 1e-6f) {
+        throw std::runtime_error(
+            "Checkpoint restoration changed the MSE."
+        );
+    }
+
+    std::cout << "Checkpoint verification successful!\n";
 
 
     return 0;

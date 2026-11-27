@@ -16,6 +16,20 @@
 #include <variant>
 #include <vector>
 
+//27-11-26: nieuwe class
+enum class LayerType {
+    Linear,
+    ReLU,
+    LeakyReLU
+};
+
+struct LayerParameters {
+    LayerType type;
+    Tensor weights;
+    Tensor bias;
+    float negative_slope = 0.0f;
+};
+
 class Sequential {
 public:
     void add(LinearReLU layer) {
@@ -271,6 +285,136 @@ public:
     std::size_t size() const {
         return layers_.size();
     }
+
+    //27-11-26
+    LayerType layer_type(std::size_t layer_index) const {
+    if (layer_index >= layers_.size()) {
+        throw std::out_of_range(
+            "Layer index is out of range"
+        );
+    }
+
+    
+    return std::visit(
+        [](const auto& current_layer) -> LayerType {
+            using Type = std::decay_t<decltype(current_layer)>;
+
+            if constexpr (std::is_same_v<Type, Linear>) {
+                return LayerType::Linear;
+            }
+            else if constexpr (std::is_same_v<Type, LinearReLU>) {
+                return LayerType::ReLU;
+            }
+            else {
+                return LayerType::LeakyReLU;
+            }
+        },
+        layers_[layer_index]
+    );
+}
+float negative_slope(std::size_t layer_index) const {
+    if (layer_index >= layers_.size()) {
+        throw std::out_of_range(
+            "Layer index is out of range"
+        );
+    }
+
+    return std::visit(
+        [](const auto& current_layer) -> float {
+            using Type = std::decay_t<decltype(current_layer)>;
+
+            if constexpr (
+                std::is_same_v<Type, LinearLeakyReLU>
+            ) {
+                return current_layer.negative_slope();
+            }
+            else {
+                return 0.0f;
+            }
+        },
+        layers_[layer_index]
+    );
+}
+
+void set_parameters(
+    const std::vector<LayerParameters>& parameters
+) {
+    // Controleer eerst het aantal lagen.
+    if (parameters.size() != layers_.size()) {
+        throw std::invalid_argument(
+            "Checkpoint has an incorrect number of layers"
+        );
+    }
+
+    // Fase 1: valideer alle lagen voordat we iets wijzigen.
+    for (std::size_t i = 0; i < parameters.size(); ++i) {
+        const LayerParameters& current = parameters[i];
+
+        // Controleer het laagtype.
+        if (current.type != layer_type(i)) {
+            throw std::invalid_argument(
+                "Checkpoint layer type does not match network"
+            );
+        }
+
+        // Controleer de tensorvormen.
+        if (current.weights.shape() != weights(i).shape()) {
+            throw std::invalid_argument(
+                "Checkpoint weights have incorrect shape"
+            );
+        }
+
+        if (current.bias.shape() != bias(i).shape()) {
+            throw std::invalid_argument(
+                "Checkpoint bias has incorrect shape"
+            );
+        }
+
+        // Controleer alle gewichten.
+        for (float value : current.weights.data()) {
+            if (!std::isfinite(value)) {
+                throw std::invalid_argument(
+                    "Checkpoint weights contain non-finite values"
+                );
+            }
+        }
+
+        // Controleer alle biases.
+        for (float value : current.bias.data()) {
+            if (!std::isfinite(value)) {
+                throw std::invalid_argument(
+                    "Checkpoint biases contain non-finite values"
+                );
+            }
+        }
+
+        // Controleer de LeakyReLU-instelling.
+        if (current.type == LayerType::LeakyReLU) {
+            if (!std::isfinite(current.negative_slope) ||
+                current.negative_slope < 0.0f ||
+                current.negative_slope != negative_slope(i)) {
+                throw std::invalid_argument(
+                    "Checkpoint negative slope does not match network"
+                );
+            }
+        }
+    }
+
+    // Fase 2: alle controles zijn geslaagd.
+    // Nu mogen de parameters daadwerkelijk worden vervangen.
+    for (std::size_t i = 0; i < parameters.size(); ++i) {
+        std::visit(
+            [&parameters, i](auto& current_layer) {
+                current_layer.set_parameters(
+                    parameters[i].weights,
+                    parameters[i].bias
+                );
+            },
+            layers_[i]
+        );
+    }
+}
+
 
 private:
     std::vector<

@@ -83,6 +83,42 @@ public:
     {
         return bias_;
     }
+    //27-11-2026:
+    void set_parameters(const Tensor& new_weights,const Tensor& new_bias) {
+        if (new_weights.shape() != weights_.shape()) {
+            throw std::invalid_argument(
+                "New weights have incorrect shape"
+            );
+        }
+
+        if (new_bias.shape() != bias_.shape()) {
+            throw std::invalid_argument(
+                "New bias has incorrect shape"
+            );
+        }
+
+        for (float value : new_weights.data()) {
+            if (!std::isfinite(value)) {
+                throw std::invalid_argument(
+                    "Weights must contain finite values"
+                );
+            }
+        }
+
+        for (float value : new_bias.data()) {
+            if (!std::isfinite(value)) {
+                throw std::invalid_argument(
+                    "Bias must contain finite values"
+                );
+            }
+        }
+
+        weights_ = new_weights;
+        bias_ = new_bias;
+
+        weight_gradients_.reset();
+        bias_gradients_.reset();
+    }
 
     //24-11-2026: Uitbreiding Backward
     //25-11-2026: Weer uitbreiding

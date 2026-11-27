@@ -261,6 +261,7 @@ endif()
 add_executable(
     training_demo
     src/training_demo.cpp
+    src/ModelSerializer.cpp
 )
 
 target_include_directories(
@@ -299,6 +300,59 @@ if(MSVC)
 else()
     target_compile_options(
         test_linear_leaky_relu PRIVATE
+        -Wall -Wextra -Wpedantic
+    )
+endif()
+
+
+# Sequential parameter restoration tests
+add_executable(
+    test_sequential_parameters
+    tests/test_sequential_parameters.cpp
+)
+
+target_include_directories(
+    test_sequential_parameters PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+add_test(
+    NAME SequentialParameterTests
+    COMMAND test_sequential_parameters
+)
+
+if(MSVC)
+    target_compile_options(test_sequential_parameters PRIVATE /W4)
+else()
+    target_compile_options(
+        test_sequential_parameters PRIVATE
+        -Wall -Wextra -Wpedantic
+    )
+endif()
+
+
+# Model Serializer tests
+add_executable(
+    test_model_serializer
+    tests/test_model_serializer.cpp
+    src/ModelSerializer.cpp
+)
+
+target_include_directories(
+    test_model_serializer PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+add_test(
+    NAME ModelSerializerTests
+    COMMAND test_model_serializer
+)
+
+if(MSVC)
+    target_compile_options(test_model_serializer PRIVATE /W4)
+else()
+    target_compile_options(
+        test_model_serializer PRIVATE
         -Wall -Wextra -Wpedantic
     )
 endif()

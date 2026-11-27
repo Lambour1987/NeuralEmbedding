@@ -108,6 +108,10 @@ public:
     const Tensor& bias() const {
         return linear_.bias();
     }
+    void set_parameters(const Tensor& new_weights,const Tensor& new_bias)
+     {
+    linear_.set_parameters(new_weights, new_bias);
+    }
 
     void zero_grad() {
         linear_.zero_grad();
@@ -120,6 +124,11 @@ public:
     void update_parameters(float learning_rate) {
         linear_.update_parameters(learning_rate);
     }
+
+    float negative_slope() const {
+    return negative_slope_;
+}
+
 
 private:
     Linear linear_;
